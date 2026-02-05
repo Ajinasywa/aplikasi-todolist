@@ -14,8 +14,18 @@ var DB *pgxpool.Pool
 func InitDB() error {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		// Default connection string for development
-		dbURL = "postgres://postgres:password@localhost:5432/todolist?sslmode=disable"
+		host := os.Getenv("DB_HOST")
+		port := os.Getenv("DB_PORT")
+		user := os.Getenv("DB_USER")
+		password := os.Getenv("DB_PASSWORD")
+		dbname := os.Getenv("DB_NAME")
+
+		if host != "" && user != "" && dbname != "" {
+			dbURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbname)
+		} else {
+			// Fallback default
+			dbURL = "postgres://postgres:password@localhost:5432/todolist?sslmode=disable"
+		}
 	}
 
 	config, err := pgxpool.ParseConfig(dbURL)

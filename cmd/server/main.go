@@ -8,12 +8,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/joho/godotenv"
 
 	"aplikasi-todolist/internal/handler"
 	"aplikasi-todolist/internal/repository"
 )
 
 func main() {
+	// Load .env file
+	_ = godotenv.Load()
+
 	// Initialize database
 	err := repository.InitDB()
 	if err != nil {
