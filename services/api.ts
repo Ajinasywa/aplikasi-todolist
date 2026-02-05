@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Task } from '@/types';
 
-// Use local IP for better network support across devices
-const API_URL = 'http://192.168.1.21:8080/api';
+// Use localhost for local development
+const API_URL = 'http://localhost:8080/api';
 
 // Base API instance without auth
 const api = axios.create({
@@ -68,11 +68,13 @@ export const getTasks = async (): Promise<Task[]> => {
     // Map backend response to frontend Task interface
     const todos = response.data.todos || [];
     return todos.map((todo: any) => ({
-        id: todo.id,
+        id: todo.id, // Assumed number from backend
         title: todo.title,
         description: todo.description,
-        category: todo.category || 'Personal', // Default to Personal
+        category: todo.category || 'Personal',
         completed: todo.is_done,
+        priority: todo.priority || 'Medium',
+        dueDate: todo.due_date,
         createdAt: todo.created_at,
         updatedAt: todo.updated_at,
     }));
@@ -83,34 +85,29 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt' | 'updatedA
         title: task.title,
         description: task.description,
         category: task.category,
-        // Backend doesn't support these yet, but we send them for future compatibility
-        priority: task.priority,
-        attachments: task.attachments,
-        due_date: task.dueDate
+        priority: task.priority || 'Medium',
+        due_date: task.dueDate,
+        // Backend ignores this but we send it or map it if backend supports attachments later
+        attachments: task.attachments
     });
-    // Map backend response to frontend Task interface
+
     const todo = response.data;
     return {
         id: todo.id,
         title: todo.title,
         description: todo.description,
         completed: todo.is_done,
+        category: todo.category || 'Personal',
+        priority: todo.priority || 'Medium',
+        dueDate: todo.due_date,
         createdAt: todo.created_at,
         updatedAt: todo.updated_at,
-        category: todo.category || 'Personal',
-        // Preserve these if returned, otherwise they might be lost on refresh until backend supports them
-        priority: task.priority,
-        dueDate: task.dueDate,
-        attachments: task.attachments
+        attachments: task.attachments // Optimistically return attachments
     };
 };
 
-export const updateTask = async (id: string, task: Partial<Task>): Promise<Task> => {
-    // Convert string ID to number for backend if possible, or support string IDs in backend
-    // backend expects int IDs currently? Let's check model.
-    // The model uses 'int'. But frontend converted everything to string.
-    // We should parse it.
-    const numericId = parseInt(id);
+export const updateTask = async (id: string | number, task: Partial<Task>): Promise<Task> => {
+    const numericId = typeof id === 'string' ? parseInt(id) : id;
 
     const response = await apiWithAuth.put(`/todos/${numericId}`, {
         title: task.title,
@@ -118,29 +115,30 @@ export const updateTask = async (id: string, task: Partial<Task>): Promise<Task>
         category: task.category,
         is_done: task.completed,
         priority: task.priority,
-        due_date: task.dueDate
+        due_date: task.dueDate,
     });
-    // Map backend response to frontend Task interface
+
     const todo = response.data;
     return {
-        id: todo.id.toString(),
+        id: todo.id,
         title: todo.title,
         description: todo.description,
         completed: todo.is_done,
+        category: todo.category || 'Personal',
+        priority: todo.priority || 'Medium',
+        dueDate: todo.due_date,
         createdAt: todo.created_at,
         updatedAt: todo.updated_at,
-        category: todo.category || 'Personal',
-        priority: task.priority,
-        dueDate: task.dueDate
+        attachments: task.attachments
     };
 };
 
-export const deleteTask = async (id: string): Promise<void> => {
-    const numericId = parseInt(id);
+export const deleteTask = async (id: string | number): Promise<void> => {
+    const numericId = typeof id === 'string' ? parseInt(id) : id;
     await apiWithAuth.delete(`/todos/${numericId}`);
 };
 
-export const toggleTask = async (id: string, completed: boolean): Promise<Task> => {
+export const toggleTask = async (id: string | number, completed: boolean): Promise<Task> => {
     return updateTask(id, { completed });
 };
 

@@ -4,14 +4,14 @@ import { FiPlus } from 'react-icons/fi';
 import clsx from 'clsx';
 
 interface TaskFormProps {
-    onAdd: (title: string, description: string, category: string, priority: 'low' | 'medium' | 'high', attachments: { url: string; name: string; type: string }[], dueDate: string) => Promise<void>;
+    onAdd: (title: string, description: string, category: string, priority: 'Low' | 'Medium' | 'High', attachments: { url: string; name: string; type: string }[], dueDate: string) => Promise<void>;
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('Personal');
-    const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+    const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
     const [dueDate, setDueDate] = useState('');
     const [attachments, setAttachments] = useState<{ url: string; name: string; type: string }[]>([]);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -19,7 +19,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const categories = ['Personal', 'Work', 'Study', 'Shopping', 'Others'];
-    const priorities = ['low', 'medium', 'high'] as const;
+    const priorities = ['Low', 'Medium', 'High'] as const;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -44,7 +44,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
             setTitle('');
             setDescription('');
             setCategory('Personal');
-            setPriority('medium');
+            setPriority('Medium');
             setDueDate('');
             setAttachments([]);
             setIsExpanded(false);
@@ -132,9 +132,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
                                                 onClick={() => setPriority(p)}
                                                 className={clsx(
                                                     "px-3 py-1.5 text-xs font-medium rounded-full transition-colors border capitalize",
-                                                    priority === p && p === 'high' && "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
-                                                    priority === p && p === 'medium' && "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
-                                                    priority === p && p === 'low' && "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
+                                                    priority === p && p === 'High' && "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+                                                    priority === p && p === 'Medium' && "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800",
+                                                    priority === p && p === 'Low' && "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800",
                                                     priority !== p && "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-700"
                                                 )}
                                             >

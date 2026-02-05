@@ -6,9 +6,9 @@ import { FiInbox } from 'react-icons/fi';
 
 interface TaskListProps {
     tasks: Task[];
-    onToggle: (id: string, completed: boolean) => void;
-    onDelete: (id: string) => void;
-    onUpdate: (id: string, updates: Partial<Task>) => Promise<void>;
+    onToggle: (id: number, completed: boolean) => void;
+    onDelete: (id: number) => void;
+    onUpdate: (updatedTask: Task) => Promise<void>;
     filter: string;
 }
 
@@ -36,7 +36,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onToggle, onDelete, onUpdate
             <AnimatePresence mode='popLayout' initial={false}>
                 {tasks.map((task) => (
                     <TaskItem
-                        key={task.id} // Ensure ID is present. If id is optional in type, we assume it's there after creation.
+                        key={task.id}
                         task={task}
                         onToggle={onToggle}
                         onDelete={onDelete}

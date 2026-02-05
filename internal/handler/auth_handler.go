@@ -7,6 +7,7 @@ import (
 	"aplikasi-todolist/internal/model"
 	"aplikasi-todolist/internal/repository"
 	"aplikasi-todolist/internal/service"
+	"aplikasi-todolist/internal/utils"
 )
 
 // AuthHandler handles authentication-related HTTP requests
@@ -30,9 +31,24 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Basic validation
-	if userReg.Username == "" || userReg.Email == "" || userReg.Password == "" {
-		http.Error(w, `{"error": "username, email, and password are required"}`, http.StatusBadRequest)
+	// Sanitize inputs
+	userReg.Username = utils.SanitizeInput(userReg.Username)
+	userReg.Email = utils.SanitizeInput(userReg.Email)
+	userReg.Password = utils.SanitizeInput(userReg.Password)
+
+	// Validate inputs
+	if err := utils.ValidateUsername(userReg.Username); err != nil {
+		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := utils.ValidateEmail(userReg.Email); err != nil {
+		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := utils.ValidatePassword(userReg.Password); err != nil {
+		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -55,9 +71,18 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Basic validation
-	if userLogin.Email == "" || userLogin.Password == "" {
-		http.Error(w, `{"error": "email and password are required"}`, http.StatusBadRequest)
+	// Sanitize inputs
+	userLogin.Email = utils.SanitizeInput(userLogin.Email)
+	userLogin.Password = utils.SanitizeInput(userLogin.Password)
+
+	// Validate inputs
+	if err := utils.ValidateEmail(userLogin.Email); err != nil {
+		http.Error(w, `{"error": "invalid email format"}`, http.StatusBadRequest)
+		return
+	}
+
+	if userLogin.Password == "" {
+		http.Error(w, `{"error": "password is required"}`, http.StatusBadRequest)
 		return
 	}
 
