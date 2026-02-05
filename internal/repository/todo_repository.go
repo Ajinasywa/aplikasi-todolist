@@ -13,7 +13,7 @@ type TodoRepository struct{}
 // GetTodosByUserID retrieves all todos for a specific user
 func (r *TodoRepository) GetTodosByUserID(userID int) ([]*model.Todo, error) {
 	query := `
-		SELECT id, user_id, title, description, is_done, created_at, updated_at
+		SELECT id, user_id, title, description, category, is_done, created_at, updated_at
 		FROM todos
 		WHERE user_id = $1
 		ORDER BY created_at DESC
@@ -33,6 +33,7 @@ func (r *TodoRepository) GetTodosByUserID(userID int) ([]*model.Todo, error) {
 			&todo.UserID,
 			&todo.Title,
 			&todo.Description,
+			&todo.Category,
 			&todo.IsDone,
 			&todo.CreatedAt,
 			&todo.UpdatedAt,
@@ -49,7 +50,7 @@ func (r *TodoRepository) GetTodosByUserID(userID int) ([]*model.Todo, error) {
 // GetTodoByID retrieves a specific todo by ID and user ID
 func (r *TodoRepository) GetTodoByID(todoID, userID int) (*model.Todo, error) {
 	query := `
-		SELECT id, user_id, title, description, is_done, created_at, updated_at
+		SELECT id, user_id, title, description, category, is_done, created_at, updated_at
 		FROM todos
 		WHERE id = $1 AND user_id = $2
 	`
@@ -60,6 +61,7 @@ func (r *TodoRepository) GetTodoByID(todoID, userID int) (*model.Todo, error) {
 		&todo.UserID,
 		&todo.Title,
 		&todo.Description,
+		&todo.Category,
 		&todo.IsDone,
 		&todo.CreatedAt,
 		&todo.UpdatedAt,
@@ -75,15 +77,21 @@ func (r *TodoRepository) GetTodoByID(todoID, userID int) (*model.Todo, error) {
 // CreateTodo creates a new todo
 func (r *TodoRepository) CreateTodo(todo *model.Todo) error {
 	query := `
-		INSERT INTO todos (user_id, title, description)
-		VALUES ($1, $2, $3)
+		INSERT INTO todos (user_id, title, description, category)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at
 	`
+
+	// Default category if empty
+	if todo.Category == "" {
+		todo.Category = "Personal"
+	}
 
 	err := DB.QueryRow(context.Background(), query,
 		todo.UserID,
 		todo.Title,
 		todo.Description,
+		todo.Category,
 	).Scan(&todo.ID, &todo.CreatedAt, &todo.UpdatedAt)
 
 	if err != nil {
@@ -99,21 +107,24 @@ func (r *TodoRepository) UpdateTodo(todo *model.Todo) error {
 		UPDATE todos
 		SET title = COALESCE($1, title),
 		    description = COALESCE($2, description),
-		    is_done = COALESCE($3, is_done),
+		    category = COALESCE($3, category),
+		    is_done = COALESCE($4, is_done),
 		    updated_at = CURRENT_TIMESTAMP
-		WHERE id = $4 AND user_id = $5
-		RETURNING title, description, is_done, updated_at
+		WHERE id = $5 AND user_id = $6
+		RETURNING title, description, category, is_done, updated_at
 	`
 
 	err := DB.QueryRow(context.Background(), query,
 		todo.Title,
 		todo.Description,
+		todo.Category,
 		todo.IsDone,
 		todo.ID,
 		todo.UserID,
 	).Scan(
 		&todo.Title,
 		&todo.Description,
+		&todo.Category,
 		&todo.IsDone,
 		&todo.UpdatedAt,
 	)

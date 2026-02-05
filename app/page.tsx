@@ -1,33 +1,34 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
-import Header from '@/components/Header';
 import TaskForm from '@/components/TaskForm';
 import TaskList from '@/components/TaskList';
 import { Task } from '@/types';
 import * as api from '@/services/api';
 import { FiSearch, FiCloudOff, FiLoader } from 'react-icons/fi';
-import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 
-export default function Home() {
+function HomeContent() {
   const { isAuthenticated, token } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Get filters from URL
+  const filterParam = searchParams.get('filter') || 'all';
+  const categoryParam = searchParams.get('category') || 'All';
 
   // Check authentication on component mount
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/login');
     } else {
-      // Set the token in the API service
       if (token) {
         localStorage.setItem('token', token);
       }
@@ -42,29 +43,22 @@ export default function Home() {
     setError(null);
     try {
       const data = await api.getTasks();
-      // Ensure we have an array (in case API returns wrapper)
       setTasks(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch tasks", err);
-      // Fallback data for demo if API is not running, or just show error.
-      // For this task, user specified http://localhost:8080/api.
-      // I'll show a friendly error message.
       setError("Unable to connect to the server. Please ensure the backend is running.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddTask = async (title: string, description: string) => {
+  const handleAddTask = async (title: string, description: string, category: string) => {
     if (!isAuthenticated) return;
-
-    // Optimistic update? Or wait for server?
-    // Let's wait for server for ID generation consistency, but we could handle optimistic.
-    // Given the requirements, standard flow is fine.
     try {
       const newTask = await api.createTask({
         title,
         description,
+        category,
         completed: false
       });
       setTasks(prev => [newTask, ...prev]);
@@ -76,23 +70,17 @@ export default function Home() {
 
   const handleToggleTask = async (id: number, completed: boolean) => {
     if (!isAuthenticated) return;
-
-    // Optimistic update
     setTasks(prev => prev.map(t => t.id === id ? { ...t, completed } : t));
     try {
       await api.toggleTask(id, completed);
-      // Re-update if needed, or rely on optimistic.
     } catch (err) {
       console.error("Failed to toggle task", err);
-      // Revert
       setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !completed } : t));
     }
   };
 
   const handleDeleteTask = async (id: number) => {
     if (!isAuthenticated) return;
-
-    if (!id) return;
     const oldTasks = [...tasks];
     setTasks(prev => prev.filter(t => t.id !== id));
     try {
@@ -106,16 +94,11 @@ export default function Home() {
 
   const handleUpdateTask = async (id: number, title: string, description?: string) => {
     if (!isAuthenticated) return;
-
-    // Optimistic
     setTasks(prev => prev.map(t => t.id === id ? { ...t, title, description } : t));
     try {
       await api.updateTask(id, { title, description });
     } catch (err) {
       console.error("Failed to update task", err);
-      // Revert involves fetching or knowing previous state.
-      // For simplicity, we might just alert or refetch.
-      // Given the optimism, simpler to just refetch or let it be (edge case).
       fetchTasks();
     }
   };
@@ -129,70 +112,59 @@ export default function Home() {
 
       if (!matchesSearch) return false;
 
-      // 2. Status Filter
-      if (filter === 'active') return !task.completed;
-      if (filter === 'completed') return task.completed;
+      // 2. Status Filter (from URL)
+      if (filterParam === 'active' && task.completed) return false;
+      if (filterParam === 'completed' && !task.completed) return false;
+
+      // 3. Category Filter (from URL)
+      if (categoryParam !== 'All' && task.category !== categoryParam) return false;
+
       return true;
     });
-  }, [tasks, filter, searchQuery]);
+  }, [tasks, filterParam, categoryParam, searchQuery]);
 
   const activeCount = tasks.filter(t => !t.completed).length;
 
   if (!isAuthenticated) {
-    return null; // Redirect happens in useEffect
+    return null;
   }
+
+  // Determine Page Title
+  let pageTitle = "Dashboard";
+  if (filterParam === 'active') pageTitle = "Active Tasks";
+  if (filterParam === 'completed') pageTitle = "Completed Tasks";
+  if (categoryParam !== 'All') pageTitle = `${categoryParam} Tasks`;
 
   return (
     <Layout>
-      <Header />
-
-      {/* Stats / Summary */}
-      <div className="flex justify-between items-center mb-8 px-2">
+      {/* Top Bar: Search and Mobile Title */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {pageTitle}
           </h2>
-          <p className="text-gray-500 text-sm">
-            {activeCount} active tasks
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} • {activeCount} active tasks
           </p>
         </div>
-      </div>
 
-      <TaskForm onAdd={handleAddTask} />
-
-      {/* Controls: Search and Filter */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6 sticky top-4 z-10 bg-gray-50/95 dark:bg-gray-950/95 p-2 rounded-xl backdrop-blur-sm transition-all">
-
-        {/* Search */}
-        <div className="relative flex-1">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+        {/* Search Bar */}
+        <div className="relative w-full md:max-w-xs group">
+          <FiSearch
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+            size={18}
+          />
           <input
             type="text"
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow shadow-sm"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm focus:shadow-md outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-gray-900 dark:text-gray-100 placeholder:text-gray-400 font-medium"
           />
         </div>
-
-        {/* Filters */}
-        <div className="flex bg-gray-200 dark:bg-gray-800 p-1 rounded-lg self-start sm:self-auto">
-          {(['all', 'active', 'completed'] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={clsx(
-                "px-4 py-1.5 text-sm font-medium rounded-md capitalize transition-all",
-                filter === f
-                  ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-              )}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
       </div>
+
+      <TaskForm onAdd={handleAddTask} />
 
       {/* Content */}
       <div className="min-h-[300px]">
@@ -218,10 +190,25 @@ export default function Home() {
             onToggle={handleToggleTask}
             onDelete={handleDeleteTask}
             onUpdate={handleUpdateTask}
-            filter={filter}
+            filter={filterParam === 'all' ? 'all' : filterParam === 'active' ? 'active' : 'completed'}
           />
         )}
       </div>
     </Layout>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <Layout>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <FiLoader className="animate-spin text-blue-500 mb-4" size={30} />
+          <p className="text-gray-500">Loading application...</p>
+        </div>
+      </Layout>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }

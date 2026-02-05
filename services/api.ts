@@ -71,6 +71,7 @@ export const getTasks = async (): Promise<Task[]> => {
         id: todo.id,
         title: todo.title,
         description: todo.description,
+        category: todo.category || 'Personal', // Default to Personal
         completed: todo.is_done,
         createdAt: todo.created_at,
         updatedAt: todo.updated_at,
@@ -81,6 +82,7 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt' | 'updatedA
     const response = await apiWithAuth.post('/todos', {
         title: task.title,
         description: task.description,
+        category: task.category,
     });
     // Map backend response to frontend Task interface
     const todo = response.data;
@@ -98,6 +100,7 @@ export const updateTask = async (id: number, task: Partial<Task>): Promise<Task>
     const response = await apiWithAuth.put(`/todos/${id}`, {
         title: task.title,
         description: task.description,
+        category: task.category,
         is_done: task.completed,
     });
     // Map backend response to frontend Task interface
