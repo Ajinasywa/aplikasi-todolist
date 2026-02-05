@@ -48,7 +48,7 @@ function HomeContent() {
     }
   };
 
-  const handleAddTask = async (title: string, description: string, category: string, priority: string, dueDate?: string) => {
+  const handleAddTask = async (title: string, description: string, category: string, priority: 'Low' | 'Medium' | 'High', dueDate?: string) => {
     try {
       const newTask = await api.createTask({
         title,
@@ -58,7 +58,7 @@ function HomeContent() {
         dueDate,
         completed: false
       });
-      
+
       // Ensure all properties are properly set
       const taskWithDefaults = {
         ...newTask,
@@ -66,7 +66,7 @@ function HomeContent() {
         category: newTask.category || 'Personal',
         dueDate: newTask.dueDate
       };
-      
+
       setTasks(prev => [taskWithDefaults, ...prev]);
     } catch (err) {
       console.error("Failed to add task", err);
@@ -193,21 +193,19 @@ function HomeContent() {
         <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-1">
           <button
             onClick={() => setViewMode('list')}
-            className={`px-4 py-2 text-sm font-medium rounded-md ${
-              viewMode === 'list'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            }`}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${viewMode === 'list'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
           >
             List View
           </button>
           <button
             onClick={() => setViewMode('calendar')}
-            className={`px-4 py-2 text-sm font-medium rounded-md ${
-              viewMode === 'calendar'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-            }`}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${viewMode === 'calendar'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
           >
             Calendar View
           </button>

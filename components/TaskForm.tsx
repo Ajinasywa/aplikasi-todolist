@@ -4,7 +4,7 @@ import { FiPlus } from 'react-icons/fi';
 import clsx from 'clsx';
 
 interface TaskFormProps {
-    onAdd: (title: string, description: string, category: string, priority: string, dueDate?: string) => Promise<void>;
+    onAdd: (title: string, description: string, category: string, priority: 'Low' | 'Medium' | 'High', dueDate?: string) => Promise<void>;
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
@@ -103,11 +103,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
                                     <select
                                         value={priority}
                                         onChange={(e) => setPriority(e.target.value as 'Low' | 'Medium' | 'High')}
-                                        className={`bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none ${
-                                            priority === 'High' ? 'text-red-600 dark:text-red-400' :
-                                            priority === 'Medium' ? 'text-yellow-600 dark:text-yellow-400' :
-                                            'text-green-600 dark:text-green-400'
-                                        }`}
+                                        className={`bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none ${priority === 'High' ? 'text-red-600 dark:text-red-400' :
+                                                priority === 'Medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                                                    'text-green-600 dark:text-green-400'
+                                            }`}
                                     >
                                         {priorities.map(pri => (
                                             <option key={pri} value={pri}>{pri}</option>

@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
     }
-    
+
     // Set loading to false after checking stored credentials
     setIsLoading(false);
   }, []);

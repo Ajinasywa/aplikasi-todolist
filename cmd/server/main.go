@@ -29,12 +29,12 @@ func main() {
 
 	// Add CORS middleware
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001", "http://192.168.1.21:3000", "*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders: []string{"Link"},
+		AllowedOrigins:   []string{"http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001", "http://192.168.1.21:3000", "*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
-		MaxAge: 300, // Maximum value not ignored by any of major browsers
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	})
 	r.Use(corsMiddleware.Handler)
 
@@ -58,7 +58,7 @@ func main() {
 	// Protected routes
 	r.Group(func(r chi.Router) {
 		r.Use(handler.AuthMiddleware)
-		
+
 		r.Get("/api/todos", todoHandler.GetTodos)
 		r.Post("/api/todos", todoHandler.CreateTodo)
 		r.Get("/api/todos/{id}", todoHandler.GetTodo)
@@ -81,25 +81,25 @@ func securityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Prevent MIME-type sniffing
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		
+
 		// Prevent clickjacking
 		w.Header().Set("X-Frame-Options", "DENY")
-		
+
 		// Enable XSS protection
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
-		
+
 		// Strict transport security
 		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
-		
+
 		// Content security policy
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';")
-		
+
 		// Referrer policy
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-		
+
 		// Feature policy
 		w.Header().Set("Feature-Policy", "geolocation 'none'; microphone 'none'; camera 'none'")
-		
+
 		next.ServeHTTP(w, r)
 	})
 }
