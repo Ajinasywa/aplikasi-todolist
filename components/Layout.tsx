@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface LayoutProps {
     children: React.ReactNode;
+    activeCategory?: string;
+    onSelectCategory?: (category: string) => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {

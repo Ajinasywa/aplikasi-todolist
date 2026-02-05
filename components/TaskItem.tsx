@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Task } from '@/types';
 import { motion } from 'framer-motion';
-import { FiTrash2, FiEdit2, FiX, FiCheck } from 'react-icons/fi';
+import { FiTrash2, FiEdit2, FiX, FiCheck, FiFile } from 'react-icons/fi';
 import clsx from 'clsx';
 
 interface TaskItemProps {
     task: Task;
-    onToggle: (id: number, completed: boolean) => void;
-    onDelete: (id: number) => void;
-    onUpdate: (id: number, title: string, description?: string) => Promise<void>;
+    onToggle: (id: string, completed: boolean) => void;
+    onDelete: (id: string) => void;
+    onUpdate: (id: string, updates: Partial<Task>) => Promise<void>;
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onUpdate }) => {
@@ -21,7 +21,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onUpdate 
         if (!editTitle.trim()) return;
         setIsUpdating(true);
         try {
-            await onUpdate(task.id!, editTitle, editDescription);
+            await onUpdate(task.id!, { title: editTitle, description: editDescription });
             setIsEditing(false);
         } catch (err) {
             console.error("Update failed", err);
@@ -96,12 +96,29 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onUpdate 
                         </div>
                     ) : (
                         <div className={`transition-all ${task.completed ? 'opacity-50' : ''}`}>
-                            <h3 className={clsx(
-                                "text-lg font-medium text-gray-900 dark:text-gray-100 leading-snug break-words",
-                                task.completed && "line-through text-gray-500"
-                            )}>
-                                {task.title}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className={clsx(
+                                    "text-lg font-medium text-gray-900 dark:text-gray-100 leading-snug break-words",
+                                    task.completed && "line-through text-gray-500"
+                                )}>
+                                    {task.title}
+                                </h3>
+                                {task.priority && (
+                                    <span className={clsx(
+                                        "px-2 py-0.5 text-[10px] font-medium rounded-full border capitalize",
+                                        task.priority === 'high' && "bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30",
+                                        task.priority === 'medium' && "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/30",
+                                        task.priority === 'low' && "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/30"
+                                    )}>
+                                        {task.priority}
+                                    </span>
+                                )}
+                                {task.category && (
+                                    <span className="px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 rounded-full border border-gray-200 dark:border-gray-700">
+                                        {task.category}
+                                    </span>
+                                )}
+                            </div>
                             {task.description && (
                                 <p className={clsx(
                                     "mt-1 text-sm text-gray-500 dark:text-gray-400 break-words leading-relaxed",
@@ -109,6 +126,22 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onUpdate 
                                 )}>
                                     {task.description}
                                 </p>
+                            )}
+                            {task.attachments && task.attachments.length > 0 && (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {task.attachments.map((file, i) => (
+                                        <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" className="block w-20 h-20 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 hover:opacity-90 transition-opacity bg-gray-50 dark:bg-gray-800 flex flex-col items-center justify-center p-1" title={file.name}>
+                                            {file.type.startsWith('image/') ? (
+                                                <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <>
+                                                    <FiFile size={24} className="text-gray-400 mb-1" />
+                                                    <span className="text-[10px] text-gray-500 truncate w-full text-center">{file.name}</span>
+                                                </>
+                                            )}
+                                        </a>
+                                    ))}
+                                </div>
                             )}
                             {task.createdAt && (
                                 <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">

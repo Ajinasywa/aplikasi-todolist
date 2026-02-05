@@ -16,20 +16,26 @@ export const getTasks = async (): Promise<Task[]> => {
 };
 
 export const createTask = async (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>): Promise<Task> => {
-    const response = await api.post('/tasks', task);
+    const response = await api.post('/tasks', {
+        ...task,
+        category: task.category || 'Personal',
+        priority: task.priority || 'medium',
+        attachments: task.attachments || [],
+        dueDate: task.dueDate
+    });
     return response.data;
 };
 
-export const updateTask = async (id: number, task: Partial<Task>): Promise<Task> => {
+export const updateTask = async (id: string, task: Partial<Task>): Promise<Task> => {
     const response = await api.put(`/tasks/${id}`, task);
     return response.data;
 };
 
-export const deleteTask = async (id: number): Promise<void> => {
+export const deleteTask = async (id: string): Promise<void> => {
     await api.delete(`/tasks/${id}`);
 };
 
-export const toggleTask = async (id: number, completed: boolean): Promise<Task> => {
+export const toggleTask = async (id: string, completed: boolean): Promise<Task> => {
     return updateTask(id, { completed });
 };
 
