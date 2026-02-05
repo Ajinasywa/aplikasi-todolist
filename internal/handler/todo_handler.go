@@ -10,6 +10,7 @@ import (
 	"aplikasi-todolist/internal/model"
 	"aplikasi-todolist/internal/repository"
 	"aplikasi-todolist/internal/service"
+	"aplikasi-todolist/internal/utils"
 )
 
 // TodoHandler handles todo-related HTTP requests
@@ -54,9 +55,29 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Basic validation
+	// Sanitize inputs
+	todoCreate.Title = utils.SanitizeInput(todoCreate.Title)
+	todoCreate.Description = utils.SanitizeInput(todoCreate.Description)
+	todoCreate.Category = utils.SanitizeInput(todoCreate.Category)
+
+	// Validate inputs
 	if todoCreate.Title == "" {
 		http.Error(w, `{"error": "title is required"}`, http.StatusBadRequest)
+		return
+	}
+
+	if len(todoCreate.Title) > 255 {
+		http.Error(w, `{"error": "title too long"}`, http.StatusBadRequest)
+		return
+	}
+
+	if len(todoCreate.Description) > 1000 {
+		http.Error(w, `{"error": "description too long"}`, http.StatusBadRequest)
+		return
+	}
+
+	if len(todoCreate.Category) > 50 {
+		http.Error(w, `{"error": "category too long"}`, http.StatusBadRequest)
 		return
 	}
 
@@ -110,6 +131,34 @@ func (h *TodoHandler) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&todoUpdate); err != nil {
 		http.Error(w, `{"error": "invalid JSON format"}`, http.StatusBadRequest)
 		return
+	}
+
+	// Sanitize inputs if they are provided
+	if todoUpdate.Title != nil {
+		sanitizedTitle := utils.SanitizeInput(*todoUpdate.Title)
+		if len(sanitizedTitle) > 255 {
+			http.Error(w, `{"error": "title too long"}`, http.StatusBadRequest)
+			return
+		}
+		*todoUpdate.Title = sanitizedTitle
+	}
+
+	if todoUpdate.Description != nil {
+		sanitizedDesc := utils.SanitizeInput(*todoUpdate.Description)
+		if len(sanitizedDesc) > 1000 {
+			http.Error(w, `{"error": "description too long"}`, http.StatusBadRequest)
+			return
+		}
+		*todoUpdate.Description = sanitizedDesc
+	}
+
+	if todoUpdate.Category != nil {
+		sanitizedCat := utils.SanitizeInput(*todoUpdate.Category)
+		if len(sanitizedCat) > 50 {
+			http.Error(w, `{"error": "category too long"}`, http.StatusBadRequest)
+			return
+		}
+		*todoUpdate.Category = sanitizedCat
 	}
 
 	todo, err := h.todoService.UpdateTodo(userID, todoID, &todoUpdate)

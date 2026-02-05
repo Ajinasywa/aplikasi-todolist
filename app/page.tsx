@@ -9,10 +9,10 @@ import { Task } from '@/types';
 import * as api from '@/services/api';
 import { FiSearch, FiCloudOff, FiLoader } from 'react-icons/fi';
 import { useAuth } from '@/context/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 function HomeContent() {
-  const { isAuthenticated, token } = useAuth();
-  const router = useRouter();
+  const { token } = useAuth();
   const searchParams = useSearchParams();
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -24,21 +24,15 @@ function HomeContent() {
   const filterParam = searchParams.get('filter') || 'all';
   const categoryParam = searchParams.get('category') || 'All';
 
-  // Check authentication on component mount
+  // Fetch tasks on component mount
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-    } else {
-      if (token) {
-        localStorage.setItem('token', token);
-      }
-      fetchTasks();
+    if (token) {
+      localStorage.setItem('token', token);
     }
-  }, [isAuthenticated, token, router]);
+    fetchTasks();
+  }, [token]);
 
   const fetchTasks = async () => {
-    if (!isAuthenticated) return;
-
     setLoading(true);
     setError(null);
     try {
@@ -53,7 +47,6 @@ function HomeContent() {
   };
 
   const handleAddTask = async (title: string, description: string, category: string) => {
-    if (!isAuthenticated) return;
     try {
       const newTask = await api.createTask({
         title,
@@ -69,7 +62,6 @@ function HomeContent() {
   };
 
   const handleToggleTask = async (id: number, completed: boolean) => {
-    if (!isAuthenticated) return;
     setTasks(prev => prev.map(t => t.id === id ? { ...t, completed } : t));
     try {
       await api.toggleTask(id, completed);
@@ -80,7 +72,6 @@ function HomeContent() {
   };
 
   const handleDeleteTask = async (id: number) => {
-    if (!isAuthenticated) return;
     const oldTasks = [...tasks];
     setTasks(prev => prev.filter(t => t.id !== id));
     try {
@@ -93,7 +84,6 @@ function HomeContent() {
   };
 
   const handleUpdateTask = async (id: number, title: string, description?: string) => {
-    if (!isAuthenticated) return;
     setTasks(prev => prev.map(t => t.id === id ? { ...t, title, description } : t));
     try {
       await api.updateTask(id, { title, description });
@@ -124,10 +114,6 @@ function HomeContent() {
   }, [tasks, filterParam, categoryParam, searchQuery]);
 
   const activeCount = tasks.filter(t => !t.completed).length;
-
-  if (!isAuthenticated) {
-    return null;
-  }
 
   // Determine Page Title
   let pageTitle = "Dashboard";
@@ -208,7 +194,9 @@ export default function Home() {
         </div>
       </Layout>
     }>
-      <HomeContent />
+      <ProtectedRoute>
+        <HomeContent />
+      </ProtectedRoute>
     </Suspense>
   );
 }
