@@ -1,8 +1,12 @@
 import React from 'react';
+import { ThemeToggle } from './ThemeToggle';
 
 const Header: React.FC = () => {
     return (
-        <header className="mb-8 text-center">
+        <header className="mb-8 relative flex flex-col items-center justify-center">
+            <div className="absolute right-0 top-0">
+                <ThemeToggle />
+            </div>
             <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-400 pb-2">
                 To-Do List
             </h1>

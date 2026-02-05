@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import Header from '@/components/Header';
 import TaskForm from '@/components/TaskForm';
@@ -9,20 +10,34 @@ import { Task } from '@/types';
 import * as api from '@/services/api';
 import { FiSearch, FiCloudOff, FiLoader } from 'react-icons/fi';
 import clsx from 'clsx';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
+  const { isAuthenticated, token } = useAuth();
+  const router = useRouter();
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch Tasks
+  // Check authentication on component mount
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    if (!isAuthenticated) {
+      router.push('/login');
+    } else {
+      // Set the token in the API service
+      if (token) {
+        localStorage.setItem('token', token);
+      }
+      fetchTasks();
+    }
+  }, [isAuthenticated, token, router]);
 
   const fetchTasks = async () => {
+    if (!isAuthenticated) return;
+
     setLoading(true);
     setError(null);
     try {
@@ -41,6 +56,8 @@ export default function Home() {
   };
 
   const handleAddTask = async (title: string, description: string) => {
+    if (!isAuthenticated) return;
+
     // Optimistic update? Or wait for server?
     // Let's wait for server for ID generation consistency, but we could handle optimistic.
     // Given the requirements, standard flow is fine.
@@ -58,6 +75,8 @@ export default function Home() {
   };
 
   const handleToggleTask = async (id: number, completed: boolean) => {
+    if (!isAuthenticated) return;
+
     // Optimistic update
     setTasks(prev => prev.map(t => t.id === id ? { ...t, completed } : t));
     try {
@@ -71,6 +90,8 @@ export default function Home() {
   };
 
   const handleDeleteTask = async (id: number) => {
+    if (!isAuthenticated) return;
+
     if (!id) return;
     const oldTasks = [...tasks];
     setTasks(prev => prev.filter(t => t.id !== id));
@@ -84,14 +105,16 @@ export default function Home() {
   };
 
   const handleUpdateTask = async (id: number, title: string, description?: string) => {
+    if (!isAuthenticated) return;
+
     // Optimistic
     setTasks(prev => prev.map(t => t.id === id ? { ...t, title, description } : t));
     try {
       await api.updateTask(id, { title, description });
     } catch (err) {
       console.error("Failed to update task", err);
-      // Revert involves fetching or knowing previous state. 
-      // For simplicity, we might just alert or refetch. 
+      // Revert involves fetching or knowing previous state.
+      // For simplicity, we might just alert or refetch.
       // Given the optimism, simpler to just refetch or let it be (edge case).
       fetchTasks();
     }
@@ -114,6 +137,10 @@ export default function Home() {
   }, [tasks, filter, searchQuery]);
 
   const activeCount = tasks.filter(t => !t.completed).length;
+
+  if (!isAuthenticated) {
+    return null; // Redirect happens in useEffect
+  }
 
   return (
     <Layout>
