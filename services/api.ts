@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { Task } from '@/types';
 
-const API_URL = 'http://localhost:8080/api';
+// Use local IP for better network support across devices
+const API_URL = 'http://192.168.1.21:8080/api';
 
 // Base API instance without auth
 const api = axios.create({
@@ -65,7 +66,8 @@ export const logoutUser = () => {
 export const getTasks = async (): Promise<Task[]> => {
     const response = await apiWithAuth.get('/todos');
     // Map backend response to frontend Task interface
-    return response.data.todos.map((todo: any) => ({
+    const todos = response.data.todos || [];
+    return todos.map((todo: any) => ({
         id: todo.id,
         title: todo.title,
         description: todo.description,

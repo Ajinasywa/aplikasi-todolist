@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch('http://192.168.1.21:8080/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,11 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { token, user } = data;
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        
+
         setToken(token);
         setUser(user);
         setIsAuthenticated(true);
-        
+
         return { success: true };
       } else {
         return { success: false, error: data.error || 'Login failed' };
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (username: string, email: string, password: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/register', {
+      const response = await fetch('http://192.168.1.21:8080/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,11 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { token, user } = data;
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        
+
         setToken(token);
         setUser(user);
         setIsAuthenticated(true);
-        
+
         return { success: true };
       } else {
         return { success: false, error: data.error || 'Registration failed' };
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
+
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
