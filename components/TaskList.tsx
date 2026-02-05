@@ -6,9 +6,9 @@ import { FiInbox } from 'react-icons/fi';
 
 interface TaskListProps {
     tasks: Task[];
-    onToggle: (id: number, completed: boolean) => void;
-    onDelete: (id: number) => void;
-    onUpdate: (id: number, title: string, description?: string) => Promise<void>;
+    onToggle: (id: string, completed: boolean) => void;
+    onDelete: (id: string) => void;
+    onUpdate: (id: string, updates: Partial<Task>) => Promise<void>;
     filter: string;
 }
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { FiGrid, FiList, FiCheckCircle, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiGrid, FiList, FiCheckCircle, FiSettings, FiLogOut, FiCalendar } from 'react-icons/fi';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
@@ -22,16 +22,21 @@ const Sidebar: React.FC<SidebarProps> = ({ className, onClose }) => {
         { name: 'Dashboard', icon: FiGrid, href: '/', filter: 'all' },
         { name: 'Active Tasks', icon: FiList, href: '/?filter=active', filter: 'active' },
         { name: 'Completed', icon: FiCheckCircle, href: '/?filter=completed', filter: 'completed' },
+        { name: 'Calendar', icon: FiCalendar, href: '/?view=calendar', filter: 'calendar' },
     ];
 
     const categories = ['Personal', 'Work', 'Study', 'Shopping', 'Others'];
 
     const isActive = (href: string, itemFilter?: string) => {
+        // Special case for Calendar
+        if (itemFilter === 'calendar') {
+            return searchParams.get('view') === 'calendar';
+        }
         if (pathname !== '/') return pathname === href;
 
         // For home page, check filters
         if (itemFilter) {
-            return currentFilter === itemFilter && !searchParams.get('category');
+            return currentFilter === itemFilter && !searchParams.get('category') && !searchParams.get('view');
         }
         return false;
     };
