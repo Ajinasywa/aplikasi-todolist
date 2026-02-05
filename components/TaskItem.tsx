@@ -17,6 +17,12 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onUpdate 
     const [editDescription, setEditDescription] = useState(task.description || '');
     const [isUpdating, setIsUpdating] = useState(false);
 
+    // Sync state with props when task updates or edit mode opens/closes
+    React.useEffect(() => {
+        setEditTitle(task.title);
+        setEditDescription(task.description || '');
+    }, [task, isEditing]);
+
     const handleUpdate = async () => {
         if (!editTitle.trim()) return;
         setIsUpdating(true);
@@ -75,7 +81,8 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onUpdate 
                             <textarea
                                 value={editDescription}
                                 onChange={(e) => setEditDescription(e.target.value)}
-                                rows={2}
+                                rows={3}
+                                placeholder="Add a description..."
                                 className="w-full text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                             />
                             <div className="flex justify-end gap-2">
@@ -102,13 +109,20 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onUpdate 
                             )}>
                                 {task.title}
                             </h3>
-                            {task.description && (
+                            {task.description ? (
                                 <p className={clsx(
                                     "mt-1 text-sm text-gray-500 dark:text-gray-400 break-words leading-relaxed",
                                     task.completed && "line-through"
                                 )}>
                                     {task.description}
                                 </p>
+                            ) : (
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="mt-1 text-xs text-blue-500 dark:text-blue-400 hover:underline flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <FiEdit2 size={10} /> Add description
+                                </button>
                             )}
                             {task.createdAt && (
                                 <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
@@ -121,17 +135,17 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onToggle, onDelete, onUpdate 
 
                 {/* Actions */}
                 {!isEditing && (
-                    <div className="flex flex-col gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex flex-col gap-1">
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors border border-transparent hover:border-blue-100 dark:hover:border-blue-800"
                             title="Edit"
                         >
                             <FiEdit2 size={16} />
                         </button>
                         <button
                             onClick={handleDelete}
-                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-transparent hover:border-red-100 dark:hover:border-red-800"
                             title="Delete"
                         >
                             <FiTrash2 size={16} />

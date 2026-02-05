@@ -4,10 +4,15 @@
 
 echo "Starting to-do list backend server..."
 
-# Set default environment variables if not set
-export DATABASE_URL=${DATABASE_URL:-"postgres://postgres:password@localhost:5432/todolist?sslmode=disable"}
-export JWT_SECRET=${JWT_SECRET:-"default_secret_key_for_development_please_change_in_production"}
-export PORT=${PORT:-"8080"}
+# Load .env file if it exists
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+fi
+
+# Construct DATABASE_URL if not set but individual vars are
+if [ -z "$DATABASE_URL" ] && [ -n "$DB_HOST" ]; then
+  export DATABASE_URL="postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
+fi
 
 echo "Using database: ${DATABASE_URL}"
 echo "Using port: ${PORT}"
