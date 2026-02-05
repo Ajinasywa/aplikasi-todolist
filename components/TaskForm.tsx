@@ -4,14 +4,17 @@ import { FiPlus } from 'react-icons/fi';
 import clsx from 'clsx';
 
 interface TaskFormProps {
-    onAdd: (title: string, description: string) => Promise<void>;
+    onAdd: (title: string, description: string, category: string) => Promise<void>;
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [category, setCategory] = useState('Personal');
     const [isExpanded, setIsExpanded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+
+    const categories = ['Personal', 'Work', 'Study', 'Shopping', 'Others'];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,9 +22,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
 
         setIsLoading(true);
         try {
-            await onAdd(title, description);
+            await onAdd(title, description, category);
             setTitle('');
             setDescription('');
+            setCategory('Personal');
             setIsExpanded(false);
         } catch (error) {
             console.error("Failed to add task", error);
@@ -65,14 +69,28 @@ const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
+                            className="space-y-4"
                         >
                             <textarea
                                 placeholder="Description (optional)"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                rows={3}
+                                rows={2}
                                 className="w-full resize-none text-gray-600 dark:text-gray-300 placeholder:text-gray-400 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-100 dark:border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
                             />
+
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm text-gray-500 dark:text-gray-400">Category:</label>
+                                <select
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    className="bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                >
+                                    {categories.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </motion.div>
 
                         <div className="flex justify-end gap-3 pt-2">

@@ -1,0 +1,1 @@
+ALTER TABLE todos ADD COLUMN category VARCHAR(50) DEFAULT 'Personal';
