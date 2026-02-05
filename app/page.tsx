@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Layout from '@/components/Layout';
 import TaskForm from '@/components/TaskForm';
 import TaskList from '@/components/TaskList';
+import CalendarView from '@/components/CalendarView';
 import { Task } from '@/types';
 import * as api from '@/services/api';
 import { FiSearch, FiCloudOff, FiLoader } from 'react-icons/fi';
@@ -19,6 +20,7 @@ function HomeContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // Get filters from URL
   const filterParam = searchParams.get('filter') || 'all';
@@ -46,15 +48,26 @@ function HomeContent() {
     }
   };
 
-  const handleAddTask = async (title: string, description: string, category: string) => {
+  const handleAddTask = async (title: string, description: string, category: string, priority: string, dueDate?: string) => {
     try {
       const newTask = await api.createTask({
         title,
         description,
         category,
+        priority,
+        dueDate,
         completed: false
       });
-      setTasks(prev => [newTask, ...prev]);
+      
+      // Ensure all properties are properly set
+      const taskWithDefaults = {
+        ...newTask,
+        priority: newTask.priority || 'Medium',
+        category: newTask.category || 'Personal',
+        dueDate: newTask.dueDate
+      };
+      
+      setTasks(prev => [taskWithDefaults, ...prev]);
     } catch (err) {
       console.error("Failed to add task", err);
       alert("Failed to add task.");
@@ -62,9 +75,9 @@ function HomeContent() {
   };
 
   const handleToggleTask = async (id: number, completed: boolean) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed } : t));
     try {
-      await api.toggleTask(id, completed);
+      const updatedTask = await api.updateTask(id, { completed });
+      setTasks(prev => prev.map(t => t.id === id ? updatedTask : t));
     } catch (err) {
       console.error("Failed to toggle task", err);
       setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !completed } : t));
@@ -83,10 +96,17 @@ function HomeContent() {
     }
   };
 
-  const handleUpdateTask = async (id: number, title: string, description?: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, title, description } : t));
+  const handleUpdateTask = async (updatedTask: Task) => {
     try {
-      await api.updateTask(id, { title, description });
+      const apiUpdatedTask = await api.updateTask(updatedTask.id!, {
+        title: updatedTask.title,
+        description: updatedTask.description,
+        category: updatedTask.category,
+        priority: updatedTask.priority,
+        dueDate: updatedTask.dueDate,
+        completed: updatedTask.completed
+      });
+      setTasks(prev => prev.map(t => t.id === updatedTask.id ? apiUpdatedTask : t));
     } catch (err) {
       console.error("Failed to update task", err);
       fetchTasks();
@@ -94,7 +114,7 @@ function HomeContent() {
   };
 
   const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
+    let filtered = tasks.filter(task => {
       // 1. Search Filter
       const matchesSearch =
         task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -111,6 +131,22 @@ function HomeContent() {
 
       return true;
     });
+
+    // Sort by priority: High > Medium > Low, then by creation date
+    filtered.sort((a, b) => {
+      const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
+      const priorityA = priorityOrder[a.priority || 'Medium'];
+      const priorityB = priorityOrder[b.priority || 'Medium'];
+
+      if (priorityA !== priorityB) {
+        return priorityB - priorityA; // Higher priority first
+      }
+
+      // If priority is the same, sort by creation date (newest first)
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    });
+
+    return filtered;
   }, [tasks, filterParam, categoryParam, searchQuery]);
 
   const activeCount = tasks.filter(t => !t.completed).length;
@@ -152,6 +188,32 @@ function HomeContent() {
 
       <TaskForm onAdd={handleAddTask} />
 
+      {/* View Toggle */}
+      <div className="flex justify-end mb-4">
+        <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 p-1">
+          <button
+            onClick={() => setViewMode('list')}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              viewMode === 'list'
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            List View
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              viewMode === 'calendar'
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            Calendar View
+          </button>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="min-h-[300px]">
         {loading ? (
@@ -170,6 +232,12 @@ function HomeContent() {
               Retry
             </button>
           </div>
+        ) : viewMode === 'calendar' ? (
+          <CalendarView
+            tasks={filteredTasks}
+            onClose={() => setViewMode('list')}
+            onToggle={handleToggleTask}
+          />
         ) : (
           <TaskList
             tasks={filteredTasks}

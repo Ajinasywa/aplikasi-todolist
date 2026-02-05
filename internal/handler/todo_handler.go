@@ -81,6 +81,12 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate priority if provided
+	if todoCreate.Priority != "" && todoCreate.Priority != "Low" && todoCreate.Priority != "Medium" && todoCreate.Priority != "High" {
+		http.Error(w, `{"error": "priority must be Low, Medium, or High"}`, http.StatusBadRequest)
+		return
+	}
+
 	todo, err := h.todoService.CreateTodo(userID, &todoCreate)
 	if err != nil {
 		http.Error(w, `{"error": "`+err.Error()+`"}`, http.StatusInternalServerError)
@@ -159,6 +165,14 @@ func (h *TodoHandler) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		*todoUpdate.Category = sanitizedCat
+	}
+
+	// Validate priority if provided
+	if todoUpdate.Priority != nil {
+		if *todoUpdate.Priority != "Low" && *todoUpdate.Priority != "Medium" && *todoUpdate.Priority != "High" {
+			http.Error(w, `{"error": "priority must be Low, Medium, or High"}`, http.StatusBadRequest)
+			return
+		}
 	}
 
 	todo, err := h.todoService.UpdateTodo(userID, todoID, &todoUpdate)

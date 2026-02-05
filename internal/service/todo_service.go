@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"time"
 
 	"aplikasi-todolist/internal/model"
 	"aplikasi-todolist/internal/repository"
@@ -43,7 +44,18 @@ func (s *TodoService) CreateTodo(userID int, todoCreate *model.TodoCreate) (*mod
 		UserID:      userID,
 		Title:       todoCreate.Title,
 		Description: todoCreate.Description,
+		Category:    todoCreate.Category,
 		IsDone:      false,
+		Priority:    todoCreate.Priority,
+	}
+
+	// Handle due date if provided
+	if todoCreate.DueDate != nil {
+		// Parse the date string to time.Time
+		parsedDate, err := time.Parse("2006-01-02", *todoCreate.DueDate)
+		if err == nil {
+			todo.DueDate = &parsedDate
+		}
 	}
 
 	err := s.todoRepo.CreateTodo(todo)
@@ -70,6 +82,23 @@ func (s *TodoService) UpdateTodo(userID int, todoID int, todoUpdate *model.TodoU
 	}
 	if todoUpdate.IsDone != nil {
 		existingTodo.IsDone = *todoUpdate.IsDone
+	}
+	if todoUpdate.Category != nil {
+		existingTodo.Category = *todoUpdate.Category
+	}
+	if todoUpdate.Priority != nil {
+		existingTodo.Priority = *todoUpdate.Priority
+	}
+	if todoUpdate.DueDate != nil {
+		// Parse the date string to time.Time
+		if *todoUpdate.DueDate != "" {
+			parsedDate, err := time.Parse("2006-01-02", *todoUpdate.DueDate)
+			if err == nil {
+				existingTodo.DueDate = &parsedDate
+			}
+		} else {
+			existingTodo.DueDate = nil
+		}
 	}
 
 	err = s.todoRepo.UpdateTodo(existingTodo)

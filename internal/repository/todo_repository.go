@@ -13,7 +13,7 @@ type TodoRepository struct{}
 // GetTodosByUserID retrieves all todos for a specific user
 func (r *TodoRepository) GetTodosByUserID(userID int) ([]*model.Todo, error) {
 	query := `
-		SELECT id, user_id, title, description, category, is_done, created_at, updated_at
+		SELECT id, user_id, title, description, category, is_done, priority, due_date, created_at, updated_at
 		FROM todos
 		WHERE user_id = $1
 		ORDER BY created_at DESC
@@ -35,6 +35,8 @@ func (r *TodoRepository) GetTodosByUserID(userID int) ([]*model.Todo, error) {
 			&todo.Description,
 			&todo.Category,
 			&todo.IsDone,
+			&todo.Priority,
+			&todo.DueDate,
 			&todo.CreatedAt,
 			&todo.UpdatedAt,
 		)
@@ -50,7 +52,7 @@ func (r *TodoRepository) GetTodosByUserID(userID int) ([]*model.Todo, error) {
 // GetTodoByID retrieves a specific todo by ID and user ID
 func (r *TodoRepository) GetTodoByID(todoID, userID int) (*model.Todo, error) {
 	query := `
-		SELECT id, user_id, title, description, category, is_done, created_at, updated_at
+		SELECT id, user_id, title, description, category, is_done, priority, due_date, created_at, updated_at
 		FROM todos
 		WHERE id = $1 AND user_id = $2
 	`
@@ -63,6 +65,8 @@ func (r *TodoRepository) GetTodoByID(todoID, userID int) (*model.Todo, error) {
 		&todo.Description,
 		&todo.Category,
 		&todo.IsDone,
+		&todo.Priority,
+		&todo.DueDate,
 		&todo.CreatedAt,
 		&todo.UpdatedAt,
 	)
@@ -77,8 +81,8 @@ func (r *TodoRepository) GetTodoByID(todoID, userID int) (*model.Todo, error) {
 // CreateTodo creates a new todo
 func (r *TodoRepository) CreateTodo(todo *model.Todo) error {
 	query := `
-		INSERT INTO todos (user_id, title, description, category)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO todos (user_id, title, description, category, priority, due_date)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, created_at, updated_at
 	`
 
@@ -87,11 +91,18 @@ func (r *TodoRepository) CreateTodo(todo *model.Todo) error {
 		todo.Category = "Personal"
 	}
 
+	// Default priority if empty
+	if todo.Priority == "" {
+		todo.Priority = "Medium"
+	}
+
 	err := DB.QueryRow(context.Background(), query,
 		todo.UserID,
 		todo.Title,
 		todo.Description,
 		todo.Category,
+		todo.Priority,
+		todo.DueDate,
 	).Scan(&todo.ID, &todo.CreatedAt, &todo.UpdatedAt)
 
 	if err != nil {
@@ -109,9 +120,11 @@ func (r *TodoRepository) UpdateTodo(todo *model.Todo) error {
 		    description = COALESCE($2, description),
 		    category = COALESCE($3, category),
 		    is_done = COALESCE($4, is_done),
+		    priority = COALESCE($5, priority),
+		    due_date = COALESCE($6, due_date),
 		    updated_at = CURRENT_TIMESTAMP
-		WHERE id = $5 AND user_id = $6
-		RETURNING title, description, category, is_done, updated_at
+		WHERE id = $7 AND user_id = $8
+		RETURNING title, description, category, is_done, priority, due_date, updated_at
 	`
 
 	err := DB.QueryRow(context.Background(), query,
@@ -119,6 +132,8 @@ func (r *TodoRepository) UpdateTodo(todo *model.Todo) error {
 		todo.Description,
 		todo.Category,
 		todo.IsDone,
+		todo.Priority,
+		todo.DueDate,
 		todo.ID,
 		todo.UserID,
 	).Scan(
@@ -126,6 +141,8 @@ func (r *TodoRepository) UpdateTodo(todo *model.Todo) error {
 		&todo.Description,
 		&todo.Category,
 		&todo.IsDone,
+		&todo.Priority,
+		&todo.DueDate,
 		&todo.UpdatedAt,
 	)
 

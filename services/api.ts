@@ -73,6 +73,8 @@ export const getTasks = async (): Promise<Task[]> => {
         description: todo.description,
         category: todo.category || 'Personal', // Default to Personal
         completed: todo.is_done,
+        priority: todo.priority || 'Medium',
+        dueDate: todo.due_date,
         createdAt: todo.created_at,
         updatedAt: todo.updated_at,
     }));
@@ -83,6 +85,8 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt' | 'updatedA
         title: task.title,
         description: task.description,
         category: task.category,
+        priority: task.priority || 'Medium',
+        due_date: task.dueDate,
     });
     // Map backend response to frontend Task interface
     const todo = response.data;
@@ -91,6 +95,9 @@ export const createTask = async (task: Omit<Task, 'id' | 'createdAt' | 'updatedA
         title: todo.title,
         description: todo.description,
         completed: todo.is_done,
+        category: todo.category,
+        priority: todo.priority,
+        dueDate: todo.due_date,
         createdAt: todo.created_at,
         updatedAt: todo.updated_at,
     };
@@ -102,6 +109,8 @@ export const updateTask = async (id: number, task: Partial<Task>): Promise<Task>
         description: task.description,
         category: task.category,
         is_done: task.completed,
+        priority: task.priority,
+        due_date: task.dueDate,
     });
     // Map backend response to frontend Task interface
     const todo = response.data;
@@ -110,6 +119,9 @@ export const updateTask = async (id: number, task: Partial<Task>): Promise<Task>
         title: todo.title,
         description: todo.description,
         completed: todo.is_done,
+        category: todo.category,
+        priority: todo.priority,
+        dueDate: todo.due_date,
         createdAt: todo.created_at,
         updatedAt: todo.updated_at,
     };

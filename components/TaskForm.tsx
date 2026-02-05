@@ -4,17 +4,20 @@ import { FiPlus } from 'react-icons/fi';
 import clsx from 'clsx';
 
 interface TaskFormProps {
-    onAdd: (title: string, description: string, category: string) => Promise<void>;
+    onAdd: (title: string, description: string, category: string, priority: string, dueDate?: string) => Promise<void>;
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('Personal');
+    const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
+    const [dueDate, setDueDate] = useState<string>('');
     const [isExpanded, setIsExpanded] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const categories = ['Personal', 'Work', 'Study', 'Shopping', 'Others'];
+    const priorities = ['Low', 'Medium', 'High'];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,10 +25,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
 
         setIsLoading(true);
         try {
-            await onAdd(title, description, category);
+            await onAdd(title, description, category, priority, dueDate);
             setTitle('');
             setDescription('');
             setCategory('Personal');
+            setPriority('Medium');
+            setDueDate('');
             setIsExpanded(false);
         } catch (error) {
             console.error("Failed to add task", error);
@@ -79,17 +84,46 @@ const TaskForm: React.FC<TaskFormProps> = ({ onAdd }) => {
                                 className="w-full resize-none text-gray-600 dark:text-gray-300 placeholder:text-gray-400 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-100 dark:border-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-sm"
                             />
 
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm text-gray-500 dark:text-gray-400">Category:</label>
-                                <select
-                                    value={category}
-                                    onChange={(e) => setCategory(e.target.value)}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex flex-col">
+                                    <label className="text-sm text-gray-500 dark:text-gray-400 mb-1">Category:</label>
+                                    <select
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        className="bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                    >
+                                        {categories.map(cat => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <label className="text-sm text-gray-500 dark:text-gray-400 mb-1">Priority:</label>
+                                    <select
+                                        value={priority}
+                                        onChange={(e) => setPriority(e.target.value as 'Low' | 'Medium' | 'High')}
+                                        className={`bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none ${
+                                            priority === 'High' ? 'text-red-600 dark:text-red-400' :
+                                            priority === 'Medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                                            'text-green-600 dark:text-green-400'
+                                        }`}
+                                    >
+                                        {priorities.map(pri => (
+                                            <option key={pri} value={pri}>{pri}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col">
+                                <label className="text-sm text-gray-500 dark:text-gray-400 mb-1">Due Date (optional):</label>
+                                <input
+                                    type="date"
+                                    value={dueDate}
+                                    onChange={(e) => setDueDate(e.target.value)}
                                     className="bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                                >
-                                    {categories.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
+                                />
                             </div>
                         </motion.div>
 

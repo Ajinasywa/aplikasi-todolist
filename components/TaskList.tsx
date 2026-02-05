@@ -8,7 +8,7 @@ interface TaskListProps {
     tasks: Task[];
     onToggle: (id: number, completed: boolean) => void;
     onDelete: (id: number) => void;
-    onUpdate: (id: number, title: string, description?: string) => Promise<void>;
+    onUpdate: (updatedTask: Task) => Promise<void>;
     filter: string;
 }
 
