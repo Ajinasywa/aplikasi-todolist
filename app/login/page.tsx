@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { FiMail, FiLock, FiArrowRight, FiUser } from 'react-icons/fi';
+import { FiMail, FiLock, FiArrowRight, FiUser, FiCheckCircle } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true); // true for login, false for register
+  const [isLogin, setIsLogin] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,13 +27,12 @@ export default function LoginPage() {
       if (isLogin) {
         result = await login(email, password);
       } else {
-        // For registration, we need a username as well
-        const username = email.split('@')[0]; // Simple username from email
+        const username = email.split('@')[0];
         result = await register(username, email, password);
       }
 
       if (result.success) {
-        router.push('/'); // Redirect to home after successful login/register
+        router.push('/');
       } else {
         setError(result.error || (isLogin ? 'Login failed' : 'Registration failed'));
       }
@@ -44,168 +44,174 @@ export default function LoginPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left Panel - Black and White Theme */}
-      <div className="w-full md:w-3/5 bg-gradient-to-br from-gray-800 to-black p-8 flex flex-col justify-between">
-        <div>
-          <div className="text-white text-2xl font-bold">To-Do List App</div>
-        </div>
-        
-        <div className="max-w-md mx-auto text-center text-white">
-          <h1 className="text-4xl font-bold mb-4">Welcome Back!</h1>
-          <p className="text-lg mb-8 opacity-90">
-            {isLogin 
-              ? "To keep connected with us please login with your personal info" 
-              : "Create an account to get started with our service"}
-          </p>
-          
-          <div className="flex justify-center space-x-4 mb-8">
-            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-              <FiUser className="text-white text-xl" />
-            </div>
-            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-              <FiMail className="text-white text-xl" />
-            </div>
-            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-              <FiLock className="text-white text-xl" />
-            </div>
-          </div>
-          
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="bg-white text-black hover:bg-gray-200 font-medium py-3 px-8 rounded-full transition duration-300 flex items-center justify-center mx-auto"
-          >
-            {isLogin ? 'CREATE ACCOUNT' : 'SIGN IN'} 
-            <FiArrowRight className="ml-2" />
-          </button>
-        </div>
-        
-        <div className="text-white/70 text-sm">
-          © {new Date().getFullYear()} To-Do List App. All rights reserved.
-        </div>
-      </div>
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setError('');
+    setEmail('');
+    setPassword('');
+  };
 
-      {/* Right Panel - White Background */}
-      <div className="w-full md:w-2/5 bg-white p-8 flex flex-col justify-center">
-        <div className="max-w-md mx-auto w-full">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-gray-900">
-              {isLogin ? 'Sign In' : 'Create Account'}
-            </h2>
-            <p className="text-gray-500 mt-2">
-              {isLogin 
-                ? 'Enter your credentials to access your account' 
-                : 'Fill in your details to create an account'}
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4 transition-colors">
+      <div className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+
+        {/* Decorative Panel - Hidden on Mobile, Visible on Desktop */}
+        <div className="hidden md:flex w-1/2 p-12 bg-gradient-to-br from-blue-600 to-indigo-900 text-white flex-col justify-between relative overflow-hidden">
+          {/* Background decorative elements */}
+          <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+            <div className="absolute top-10 left-10 w-32 h-32 rounded-full bg-white blur-3xl"></div>
+            <div className="absolute bottom-10 right-10 w-64 h-64 rounded-full bg-blue-400 blur-3xl"></div>
+          </div>
+
+          <div className="relative z-10">
+            <div className="text-2xl font-bold tracking-tight mb-2">Todo Genius</div>
+            <div className="h-1 w-12 bg-white/50 rounded-full"></div>
+          </div>
+
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold mb-6 leading-tight">
+              {isLogin ? "Welcome Back!" : "Join Us Today"}
+            </h1>
+            <p className="text-lg text-blue-100 mb-8 leading-relaxed">
+              {isLogin
+                ? "Stay organized, focused, and get more done with our intelligent task management solution."
+                : "Start your journey to better productivity. Create an account and organize your life."}
             </p>
           </div>
 
-          {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm mb-6">
-              {error}
-            </div>
-          )}
+          <div className="relative z-10 text-sm text-blue-200">
+            © {new Date().getFullYear()} Todo Genius. All rights reserved.
+          </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {!isLogin && (
+        {/* Form Panel - Full width on Mobile, Half on Desktop */}
+        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-white dark:bg-gray-900">
+          {/* Mobile Branding (Visible only on small screens) */}
+          <div className="md:hidden text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Todo Genius</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Productivity Simplified</p>
+          </div>
+
+          <div className="max-w-sm mx-auto w-full">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                {isLogin ? 'Sign In' : 'Create Account'}
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400">
+                {isLogin
+                  ? 'Enter your details to access your dashboard'
+                  : 'Fill in the form below to get started'}
+              </p>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg text-sm mb-6 flex items-center gap-2 border border-red-100 dark:border-red-900/30"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {!isLogin && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username</label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FiUser className="text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                    </div>
+                    <input
+                      type="text"
+                      value={email.split('@')[0]}
+                      disabled
+                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 dark:text-gray-400 cursor-not-allowed opacity-75"
+                      placeholder="Username"
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1 ml-1">* Auto-generated from email</p>
+                </motion.div>
+              )}
+
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
-                </label>
-                <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email Address</label>
+                <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiUser className="text-gray-400" />
+                    <FiMail className="text-gray-400 group-focus-within:text-blue-500 transition-colors" />
                   </div>
                   <input
-                    type="text"
-                    id="username"
-                    value={email.split('@')[0]} // Use email prefix as username
-                    disabled
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black disabled:opacity-50"
-                    placeholder="Username"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
+                    placeholder="name@example.com"
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Username derived from your email address
-                </p>
               </div>
-            )}
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiMail className="text-gray-400" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiLock className="text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                  </div>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400"
+                    placeholder="••••••••"
+                  />
                 </div>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="you@example.com"
-                />
               </div>
-            </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock className="text-gray-400" />
-                </div>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-3 px-4 text-white font-medium rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                loading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-black hover:bg-gray-800 focus:ring-black'
-              }`}
-            >
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
-                </span>
-              ) : isLogin ? 'SIGN IN' : 'CREATE ACCOUNT'}
-            </button>
-          </form>
-
-          <div className="mt-8 text-center text-sm text-gray-600">
-            <p>
-              {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
               <button
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError('');
-                }}
-                className="font-medium text-black hover:text-gray-700 focus:outline-none"
+                type="submit"
+                disabled={loading}
+                className={clsx(
+                  "w-full py-3.5 px-4 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+                  loading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 active:scale-[0.98]"
+                )}
               >
-                {isLogin ? 'Sign up' : 'Sign in'}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    {isLogin ? 'Sign In' : 'Create Account'} <FiArrowRight />
+                  </span>
+                )}
               </button>
-            </p>
+            </form>
+
+            <div className="mt-8 text-center text-sm">
+              <p className="text-gray-500 dark:text-gray-400">
+                {isLogin ? "Don't have an account yet?" : "Already have an account?"}{' '}
+                <button
+                  onClick={toggleMode}
+                  className="font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors focus:outline-none hover:underline"
+                >
+                  {isLogin ? 'Sign up' : 'Log in'}
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       </div>
